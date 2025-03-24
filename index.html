@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lightning Talks Schedule</title>
+    <style>
+        @font-face {
+            font-family: 'Digital';
+            src: url('DigitalNumbers-Regular.ttf') format('truetype');
+        }
+        
+        @font-face {
+            font-family: 'DIN-Bold';
+            src: url('DIN-Bold.ttf') format('truetype');
+        }
+        
+        body {
+            background-color: #333;
+            color: #fff;
+            font-family: 'DIN-Bold', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            background-color: #3c3527;
+            border-radius: 10px;
+            padding: 2vh 2vw;
+            width: 95vw;
+            height: 90vh;
+            max-width: none;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2vh;
+            flex: 0 0 auto;
+        }
+        
+        .logo {
+            width: 6vw;
+            height: 6vw;
+            max-height: 10vh;
+            margin-right: 2vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .title {
+            color: #fff;
+            font-size: 5vh;
+            font-weight: bold;
+            font-family: 'DIN-Bold', Arial, sans-serif;
+            text-transform: uppercase;
+        }
+        
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        #schedule-container {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .schedule-header {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr 1fr;
+            border-bottom: 2px solid #fff;
+            padding-bottom: 1.5vh;
+            margin-bottom: 1.5vh;
+            flex: 0 0 auto;
+            padding-left: 1vw;
+            padding-right: 1vw;
+            column-gap: 2vw; /* Add gap between columns to match rows */
+        }
+        
+        .schedule-header div {
+            color: #fff;
+            font-size: 3vh;
+            font-weight: bold;
+            font-family: 'DIN-Bold', Arial, sans-serif;
+            text-transform: uppercase;
+            padding: 0 0.5vw;
+        }
+        
+        .schedule-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr 1fr;
+            padding: 1.5vh 1vw;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 8vh;
+            align-items: center;
+            column-gap: 2vw; /* Add gap between columns */
+        }
+        
+        .schedule-row div {
+            color: #ffd580; /* Even lighter orange color for better visibility */
+            font-family: 'DIN-Regular', Arial, sans-serif;
+            font-size: 3.5vh;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            white-space: nowrap;
+            margin-right: 1vw; /* Add margin between columns */
+        }
+        
+        .status-open {
+            color: #ffe0a3; /* Even lighter orange */
+        }
+        
+        .status-closing {
+            color: #ffc299; /* Even lighter orange-red */
+        }
+        
+        .status-closed {
+            color: #ff9999; /* Even lighter red */
+        }
+        
+        /* Simple styling for schedule text */
+        .schedule-text {
+            display: inline-block;
+            padding: 0.3vh 0.3vw;
+            text-shadow: 0 0 3px rgba(255, 192, 77, 0.5);
+        }
+        
+        /* Simple fade animation for updates */
+        @keyframes fade {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        
+        .fade {
+            animation: fade 0.5s;
+        }
+        
+        /* Add subtle shadow to create depth */
+        .schedule-row {
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <img src="logo.png" alt="Impact Minds Logo">
+            </div>
+            <div class="title">LIGHTNING TALKS</div>
+        </div>
+        
+        <div class="schedule-header">
+            <div>TIME</div>
+            <div>SPEAKER</div>
+            <div>ROOM</div>
+            <div>STATUS</div>
+        </div>
+        
+        <div id="schedule-container">
+            <!-- Schedule rows will be populated here from CSV data -->
+        </div>
+    </div>
+
+    <script>
+        // Function to fetch and parse CSV data
+        async function fetchScheduleData() {
+            try {
+                const response = await fetch('schedule.csv');
+                const data = await response.text();
+                const rows = data.split('\n').filter(row => row.trim() !== '');
+                
+                // Skip header row if it exists
+                const startIndex = rows[0].includes('TIME') || rows[0].includes('time') ? 1 : 0;
+                
+                const scheduleData = [];
+                for (let i = startIndex; i < rows.length; i++) {
+                    const columns = rows[i].split(',');
+                    if (columns.length >= 4) {
+                        scheduleData.push({
+                            time: columns[0].trim(),
+                            speaker: columns[1].trim(),
+                            room: columns[2].trim(),
+                            status: columns[3].trim().toUpperCase()
+                        });
+                    }
+                }
+                
+                return scheduleData;
+            } catch (error) {
+                console.error('Error fetching schedule data:', error);
+                return [];
+            }
+        }
+        
+        // Function to create simple text elements
+        function createTextElement(text) {
+            const span = document.createElement('span');
+            span.className = 'schedule-text';
+            span.textContent = String(text);
+            return span;
+        }
+        
+        // Function to render schedule data
+        function renderSchedule(scheduleData) {
+            const container = document.getElementById('schedule-container');
+            container.innerHTML = '';
+            
+            scheduleData.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'schedule-row';
+                
+                const timeDiv = document.createElement('div');
+                timeDiv.appendChild(createTextElement(item.time));
+                
+                const speakerDiv = document.createElement('div');
+                speakerDiv.appendChild(createTextElement(item.speaker));
+                
+                const roomDiv = document.createElement('div');
+                roomDiv.appendChild(createTextElement(item.room));
+                
+                const statusDiv = document.createElement('div');
+                statusDiv.appendChild(createTextElement(item.status));
+                
+                // Apply status-specific styling
+                if (item.status === 'OPEN') {
+                    statusDiv.className = 'status-open';
+                } else if (item.status === 'CLOSING') {
+                    statusDiv.className = 'status-closing';
+                } else if (item.status === 'CLOSED') {
+                    statusDiv.className = 'status-closed';
+                }
+                
+                row.appendChild(timeDiv);
+                row.appendChild(speakerDiv);
+                row.appendChild(roomDiv);
+                row.appendChild(statusDiv);
+                
+                container.appendChild(row);
+            });
+        }
+        
+        // No audio functionality in this version
+        
+        // Function to update schedule with simple fade animation
+        function updateSchedule() {
+            fetchScheduleData().then(data => {
+                const container = document.getElementById('schedule-container');
+                
+                // Apply simple fade animation to the container
+                container.classList.add('fade');
+                
+                // Wait for animation to complete before updating content
+                setTimeout(() => {
+                    renderSchedule(data);
+                    
+                    // Remove animation class after update
+                    setTimeout(() => {
+                        container.classList.remove('fade');
+                    }, 500);
+                }, 500);
+            });
+        }
+        
+        // Initial render
+        updateSchedule();
+        
+        // Update schedule every 45 seconds
+        setInterval(updateSchedule, 45000);
+    </script>
+</body>
+</html>
